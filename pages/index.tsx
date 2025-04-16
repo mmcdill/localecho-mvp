@@ -14,6 +14,22 @@ export default function Home() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
 
+  const handleGenerateResponse = async (review: Review) => {
+    try {
+      const res = await fetch('/api/generate-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ review: review.customer_review })
+      });
+
+      const { generatedResponse } = await res.json();
+      console.log('AI Response:', generatedResponse);
+      // Optional: You can update the UI with the response later
+    } catch (error) {
+      console.error('Error generating AI response:', error);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       const data = await getReviews()
@@ -39,10 +55,22 @@ export default function Home() {
       ) : (
         <ul>
           {reviews.map((review) => (
-            <li key={review.id} style={{ marginBottom: '1rem' }}>
+            <li key={review.id} style={{ marginBottom: '1.5rem' }}>
               <strong>{review.business_name}</strong> — <em>{review.customer_review}</em>
               <br />
               <small>{new Date(review.created_at).toLocaleString()}</small>
+              <br />
+              <button
+                onClick={() => handleGenerateResponse(review)}
+                style={{
+                  marginTop: '0.5rem',
+                  padding: '6px 12px',
+                  fontSize: '0.9rem',
+                  cursor: 'pointer'
+                }}
+              >
+                ✨ AI Response
+              </button>
             </li>
           ))}
         </ul>
