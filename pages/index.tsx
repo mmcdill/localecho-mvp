@@ -11,6 +11,9 @@ import { motion } from 'framer-motion'
 // Internal API imports
 import { getReviews } from '@/lib/api'
 
+// Modal component for settings
+import Modal from 'react-modal'
+
 // Main Home component for the AI-powered review response assistant
 export default function Home() {
   // State variables
@@ -23,6 +26,7 @@ export default function Home() {
   const [editedResponse, setEditedResponse] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [showSettings, setShowSettings] = useState(false)
   const router = useRouter()
 
   // Fetch all reviews on component mount
@@ -34,7 +38,6 @@ export default function Home() {
     fetchData()
   }, [])
 
-  // Handler: Generate AI response for a given review
   const handleGenerateResponse = async (reviewId: number, business_name: string, customer_review: string) => {
     setIsLoading(true)
     setErrorMessage('')
@@ -55,7 +58,6 @@ export default function Home() {
     }
   }
 
-  // Handler: Submit a new customer review
   const handleSubmitReview = async () => {
     const response = await fetch('/api/add-review', {
       method: 'POST',
@@ -73,7 +75,6 @@ export default function Home() {
     }
   }
 
-  // Handler: Delete a review
   const handleDeleteReview = async (reviewId: number) => {
     if (!confirm('Are you sure you want to delete this review?')) return
     const response = await fetch('/api/delete-review', {
@@ -89,7 +90,6 @@ export default function Home() {
     }
   }
 
-  // Handler: Save edited AI response
   const handleSaveEditedResponse = async (reviewId: number) => {
     if (!editedResponse.trim()) {
       alert('Please enter a valid response before saving.')
@@ -116,7 +116,6 @@ export default function Home() {
     }
   }
 
-  // Derived: Filter reviews based on search term
   const filteredReviews = reviews.filter(
     (review) =>
       review.business_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -125,13 +124,39 @@ export default function Home() {
 
   return (
     <div style={{ padding: '2rem' }}>
-      {/* Header Section */}
       <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
         👋 Welcome to LocalEcho
       </motion.h1>
       <p>This is the MVP starting point for your AI-powered review response assistant.</p>
 
-      {/* Add New Review Section */}
+      <button onClick={() => setShowSettings(true)} style={{ margin: '1rem 0', padding: '0.5rem 1rem' }}>
+        ⚙️ Settings
+      </button>
+
+      <Modal
+        isOpen={showSettings}
+        onRequestClose={() => setShowSettings(false)}
+        contentLabel="Settings"
+        style={{ content: { maxWidth: '400px', margin: 'auto' } }}
+      >
+        <h2>Settings</h2>
+        <label htmlFor="default-tone">Default Tone:</label>
+        <select
+          id="default-tone"
+          value={tone}
+          onChange={(e) => setTone(e.target.value)}
+          style={{ marginTop: '0.5rem', marginBottom: '1rem' }}
+        >
+          <option value="Professional">Professional</option>
+          <option value="Friendly">Friendly</option>
+          <option value="Empathetic">Empathetic</option>
+          <option value="Witty">Witty</option>
+          <option value="Apologetic">Apologetic</option>
+        </select>
+        <br />
+        <button onClick={() => setShowSettings(false)}>Close</button>
+      </Modal>
+
       <section style={{ margin: '2rem 0' }}>
         <h2>Add New Review</h2>
         <input
@@ -167,7 +192,6 @@ export default function Home() {
         </button>
       </section>
 
-      {/* Search Reviews Section */}
       <section>
         <label htmlFor="search">🔍 Search Reviews:</label>
         <input
@@ -180,11 +204,9 @@ export default function Home() {
         />
       </section>
 
-      {/* Loading & Error Messages */}
       {isLoading && <p>⏳ Loading...</p>}
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
 
-      {/* Reviews List Section */}
       <section style={{ marginTop: '2rem' }}>
         <h2>📋 Reviews:</h2>
         {filteredReviews.length === 0 ? (
@@ -253,9 +275,8 @@ export default function Home() {
         )}
       </section>
 
-      {/* Dashboard Link Section */}
       <section style={{ marginTop: '2rem' }}>
-        <Link href="/dashboard">📊 View Insights</Link>
+        <Link href="/insights">📊 View Insights</Link>
       </section>
     </div>
   )
