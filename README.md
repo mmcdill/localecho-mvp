@@ -81,7 +81,7 @@ LocalEcho helps local business owners efficiently respond to customer reviews us
 ## 👤 Author
 
 **Matt McDill**  
-Passionate about local business, community connection, and sports coaching.  
+Passionate about contributing towards small businesses & community connection.  
 Connect via GitHub: [@mmcdill](https://github.com/mmcdill)
 
 ---
