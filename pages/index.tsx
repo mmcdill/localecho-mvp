@@ -16,7 +16,6 @@ import Modal from 'react-modal'
 
 // Main Home component for the AI-powered review response assistant
 export default function Home() {
-  // State variables
   const [reviews, setReviews] = useState<any[]>([])
   const [tone, setTone] = useState('Professional')
   const [businessName, setBusinessName] = useState('')
@@ -24,16 +23,18 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('')
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editedResponse, setEditedResponse] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
   const [showSettings, setShowSettings] = useState(false)
   const router = useRouter()
 
-  // Fetch all reviews on component mount
   useEffect(() => {
     const fetchData = async () => {
+      await new Promise((resolve) => setTimeout(resolve, 2000))
       const allReviews = await getReviews()
-      setReviews(allReviews)
+      const userReviews = allReviews.filter((r) => r.user_id === 'demo-user')
+      setReviews(userReviews)
+      setIsLoading(false)
     }
     fetchData()
   }, [])
@@ -50,7 +51,8 @@ export default function Home() {
       if (!response.ok) throw new Error('Failed to generate response')
       alert('AI response generated!')
       const updatedReviews = await getReviews()
-      setReviews(updatedReviews)
+      const userReviews = updatedReviews.filter((r) => r.user_id === 'demo-user')
+      setReviews(userReviews)
     } catch (error) {
       setErrorMessage('Oops, response failed.')
     } finally {
@@ -62,12 +64,18 @@ export default function Home() {
     const response = await fetch('/api/add-review', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ business_name: businessName, customer_review: customerReview, tone })
+      body: JSON.stringify({
+        business_name: businessName,
+        customer_review: customerReview,
+        tone,
+        user_id: 'demo-user'
+      })
     })
     if (response.ok) {
       alert('Review added! Refreshing...')
       const updatedReviews = await getReviews()
-      setReviews(updatedReviews)
+      const userReviews = updatedReviews.filter((r) => r.user_id === 'demo-user')
+      setReviews(userReviews)
       setBusinessName('')
       setCustomerReview('')
     } else {
@@ -106,7 +114,8 @@ export default function Home() {
       if (!response.ok) throw new Error('Failed to update response')
       alert('Response updated!')
       const updatedReviews = await getReviews()
-      setReviews(updatedReviews)
+      const userReviews = updatedReviews.filter((r) => r.user_id === 'demo-user')
+      setReviews(userReviews)
       setEditingId(null)
       setEditedResponse('')
     } catch (error) {
@@ -120,6 +129,30 @@ export default function Home() {
     (review) =>
       review.business_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       review.customer_review.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const renderSkeletons = () => (
+    <ul>
+      {Array.from({ length: 3 }).map((_, index) => (
+        <li key={index} style={{ marginBottom: '1.5rem' }}>
+          <div className="animate-pulse">
+            <div className="bg-gray-300 h-4 w-1/2 mb-2 rounded"></div>
+            <div className="bg-gray-300 h-3 w-3/4 mb-1 rounded"></div>
+            <div className="bg-gray-300 h-3 w-1/3 mb-1 rounded"></div>
+            <div className="bg-gray-300 h-3 w-full mb-1 rounded"></div>
+            <div className="bg-gray-300 h-8 w-24 rounded mt-2"></div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+
+  const renderEmptyState = () => (
+    <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.6 }}>
+      <div style={{ fontSize: '3rem' }}>📭</div>
+      <p style={{ marginTop: '0.5rem' }}><strong>No reviews yet.</strong></p>
+      <p style={{ fontSize: '0.95rem' }}>Add a review above and see AI magic happen ✨</p>
+    </div>
   )
 
   return (
@@ -204,13 +237,14 @@ export default function Home() {
         />
       </section>
 
-      {isLoading && <p>⏳ Loading...</p>}
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
 
       <section style={{ marginTop: '2rem' }}>
         <h2>📋 Reviews:</h2>
-        {filteredReviews.length === 0 ? (
-          <p>No reviews found.</p>
+        {isLoading ? (
+          renderSkeletons()
+        ) : filteredReviews.length === 0 ? (
+          renderEmptyState()
         ) : (
           <ul>
             {filteredReviews.map((review, index) => (
