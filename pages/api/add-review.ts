@@ -1,26 +1,34 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
-import { supabase } from '@/lib/initSupabase'
+import { NextApiRequest, NextApiResponse } from 'next'
+import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
-    const { business_name, customer_review, tone, user_id } = req.body
+  const supabase = createServerSupabaseClient({ req, res })
 
-    const { data, error } = await supabase.from('reviews').insert([
-      {
-        business_name,
-        customer_review,
-        tone,
-        user_id: user_id || 'demo-user', // fallback if user_id isn't provided
-      },
-    ])
+  const {
+    data: { user },
+    error
+  } = await supabase.auth.getUser()
 
-    if (error) {
-      console.error('Error inserting review:', error)
-      return res.status(500).json({ error: 'Error adding review' })
-    }
+  if (error || !user) {
+    return res.status(401).json({ error: 'User not authenticated' })
+  }
 
-    return res.status(200).json(data)
-  } else {
+  if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  const { business_name, customer_review, tone } = req.body
+
+  const { error: insertError } = await supabase.from('reviews').insert({
+    user_id: user.id,
+    business_name,
+    customer_review,
+    tone
+  })
+
+  if (insertError) {
+    return res.status(500).json({ error: insertError.message })
+  }
+
+  return res.status(200).json({ message: 'Review added successfully' })
 }

@@ -7,12 +7,15 @@ import Link from 'next/link'
 
 // Third-party library imports
 import { motion } from 'framer-motion'
+import Modal from 'react-modal'
 
 // Internal API imports
 import { getReviews } from '@/lib/api'
+import { useUser } from '@supabase/auth-helpers-react'
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs'
 
-// Modal component for settings
-import Modal from 'react-modal'
+// Logo
+import Image from 'next/image'
 
 // Main Home component for the AI-powered review response assistant
 export default function Home() {
@@ -23,21 +26,27 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('')
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editedResponse, setEditedResponse] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
-  const [showSettings, setShowSettings] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const user = useUser()
   const router = useRouter()
+  const supabase = createPagesBrowserClient()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/auth')
+  }
 
   useEffect(() => {
     const fetchData = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      if (!user) return
       const allReviews = await getReviews()
-      const userReviews = allReviews.filter((r) => r.user_id === 'demo-user')
-      setReviews(userReviews)
-      setIsLoading(false)
+      const filtered = allReviews.filter((r) => r.user_id === user.id)
+      setReviews(filtered)
     }
     fetchData()
-  }, [])
+  }, [user])
 
   const handleGenerateResponse = async (reviewId: number, business_name: string, customer_review: string) => {
     setIsLoading(true)
@@ -51,8 +60,8 @@ export default function Home() {
       if (!response.ok) throw new Error('Failed to generate response')
       alert('AI response generated!')
       const updatedReviews = await getReviews()
-      const userReviews = updatedReviews.filter((r) => r.user_id === 'demo-user')
-      setReviews(userReviews)
+      const filtered = updatedReviews.filter((r) => r.user_id === user?.id)
+      setReviews(filtered)
     } catch (error) {
       setErrorMessage('Oops, response failed.')
     } finally {
@@ -61,6 +70,11 @@ export default function Home() {
   }
 
   const handleSubmitReview = async () => {
+    if (!user?.id) {
+      alert('User not authenticated')
+      return
+    }
+
     const response = await fetch('/api/add-review', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -68,14 +82,15 @@ export default function Home() {
         business_name: businessName,
         customer_review: customerReview,
         tone,
-        user_id: 'demo-user'
+        user_id: user.id
       })
     })
+
     if (response.ok) {
       alert('Review added! Refreshing...')
       const updatedReviews = await getReviews()
-      const userReviews = updatedReviews.filter((r) => r.user_id === 'demo-user')
-      setReviews(userReviews)
+      const filtered = updatedReviews.filter((r) => r.user_id === user.id)
+      setReviews(filtered)
       setBusinessName('')
       setCustomerReview('')
     } else {
@@ -114,8 +129,8 @@ export default function Home() {
       if (!response.ok) throw new Error('Failed to update response')
       alert('Response updated!')
       const updatedReviews = await getReviews()
-      const userReviews = updatedReviews.filter((r) => r.user_id === 'demo-user')
-      setReviews(userReviews)
+      const filtered = updatedReviews.filter((r) => r.user_id === user?.id)
+      setReviews(filtered)
       setEditingId(null)
       setEditedResponse('')
     } catch (error) {
@@ -131,63 +146,43 @@ export default function Home() {
       review.customer_review.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const renderSkeletons = () => (
-    <ul>
-      {Array.from({ length: 3 }).map((_, index) => (
-        <li key={index} style={{ marginBottom: '1.5rem' }}>
-          <div className="animate-pulse">
-            <div className="bg-gray-300 h-4 w-1/2 mb-2 rounded"></div>
-            <div className="bg-gray-300 h-3 w-3/4 mb-1 rounded"></div>
-            <div className="bg-gray-300 h-3 w-1/3 mb-1 rounded"></div>
-            <div className="bg-gray-300 h-3 w-full mb-1 rounded"></div>
-            <div className="bg-gray-300 h-8 w-24 rounded mt-2"></div>
-          </div>
-        </li>
-      ))}
-    </ul>
-  )
-
-  const renderEmptyState = () => (
-    <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.6 }}>
-      <div style={{ fontSize: '3rem' }}>📭</div>
-      <p style={{ marginTop: '0.5rem' }}><strong>No reviews yet.</strong></p>
-      <p style={{ fontSize: '0.95rem' }}>Add a review above and see AI magic happen ✨</p>
-    </div>
-  )
-
   return (
     <div style={{ padding: '2rem' }}>
+      {/* Logout Button */}
+      {user && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+          <button onClick={handleLogout} style={{ padding: '0.5rem 1rem', backgroundColor: '#eee' }}>
+            🚪 Log Out
+          </button>
+        </div>
+      )}
+
+      {/* Logo */}
+      <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+        <Image
+          src="/LocalEcho Logo.png"
+          alt="LocalEcho Logo"
+          width={100}
+          height={100}
+        />
+      </div>
+
       <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
         👋 Welcome to LocalEcho
       </motion.h1>
       <p>This is the MVP starting point for your AI-powered review response assistant.</p>
 
-      <button onClick={() => setShowSettings(true)} style={{ margin: '1rem 0', padding: '0.5rem 1rem' }}>
-        ⚙️ Settings
-      </button>
+      <button onClick={() => setIsModalOpen(true)} style={{ marginBottom: '1rem' }}>⚙️ Settings</button>
 
       <Modal
-        isOpen={showSettings}
-        onRequestClose={() => setShowSettings(false)}
-        contentLabel="Settings"
-        style={{ content: { maxWidth: '400px', margin: 'auto' } }}
+        isOpen={isModalOpen}
+        onRequestClose={() => setIsModalOpen(false)}
+        contentLabel="Settings Modal"
+        style={{ content: { top: '25%', left: '25%', right: '25%', bottom: '25%' } }}
       >
         <h2>Settings</h2>
-        <label htmlFor="default-tone">Default Tone:</label>
-        <select
-          id="default-tone"
-          value={tone}
-          onChange={(e) => setTone(e.target.value)}
-          style={{ marginTop: '0.5rem', marginBottom: '1rem' }}
-        >
-          <option value="Professional">Professional</option>
-          <option value="Friendly">Friendly</option>
-          <option value="Empathetic">Empathetic</option>
-          <option value="Witty">Witty</option>
-          <option value="Apologetic">Apologetic</option>
-        </select>
-        <br />
-        <button onClick={() => setShowSettings(false)}>Close</button>
+        <p>(Coming soon!) Choose default tone, enable AI by default, etc.</p>
+        <button onClick={() => setIsModalOpen(false)}>Close</button>
       </Modal>
 
       <section style={{ margin: '2rem 0' }}>
@@ -237,14 +232,17 @@ export default function Home() {
         />
       </section>
 
+      {isLoading && <p>⏳ Loading...</p>}
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
 
       <section style={{ marginTop: '2rem' }}>
         <h2>📋 Reviews:</h2>
-        {isLoading ? (
-          renderSkeletons()
-        ) : filteredReviews.length === 0 ? (
-          renderEmptyState()
+        {filteredReviews.length === 0 ? (
+          <div style={{ textAlign: 'center', color: '#666' }}>
+            <p style={{ fontSize: '4rem' }}>📭</p>
+            <strong>No reviews yet.</strong>
+            <p>Add a review above and see AI magic happen ✨</p>
+          </div>
         ) : (
           <ul>
             {filteredReviews.map((review, index) => (

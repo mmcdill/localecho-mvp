@@ -1,9 +1,12 @@
-// pages/api/generate-response.ts
-import { openai } from '@/lib/openai'
-import { supabase } from '@/lib/supabaseClient'
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs'
+import OpenAI from 'openai'
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const supabase = createServerSupabaseClient({ req, res })
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -14,59 +17,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Missing required fields' })
   }
 
+  const prompt = `
+You are an assistant helping businesses respond to customer reviews.
+Tone: ${tone}
+Business: ${business_name}
+Review: ${customer_review}
+
+First, write an appropriate response in the given tone.
+Then, classify the sentiment of the customer's review as "positive", "neutral", or "negative".
+
+Respond in this JSON format:
+{
+  "response": "<the response text>",
+  "sentiment": "<positive|neutral|negative>"
+}
+`
+
   try {
-    // 1. Generate AI response
     const completion = await openai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: `You are an assistant that writes ${tone.toLowerCase()} responses to customer reviews for a business.`,
-        },
-        {
-          role: 'user',
-          content: `Write a ${tone.toLowerCase()} response to this customer review for ${business_name}: "${customer_review}"`,
-        },
-      ],
-      model: 'gpt-4',
+      messages: [{ role: 'user', content: prompt }],
+      model: 'gpt-4'
     })
 
-    const aiResponse = completion.choices[0]?.message?.content?.trim()
+    const jsonResponse = completion.choices[0].message.content
+    console.log('🔍 Raw OpenAI response:', jsonResponse)
 
-    if (!aiResponse) {
-      return res.status(500).json({ error: 'Failed to generate AI response' })
-    }
+    const parsed = JSON.parse(jsonResponse ?? '{}')
+    const { response, sentiment } = parsed
 
-    // 2. Generate Sentiment
-    const sentimentCompletion = await openai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: `You are a sentiment analysis assistant. Only respond with one word: Positive, Neutral, or Negative.`,
-        },
-        {
-          role: 'user',
-          content: `Analyze the following customer review and classify its sentiment: "${customer_review}"`,
-        },
-      ],
-      model: 'gpt-4',
-    })
-
-    const sentiment = sentimentCompletion.choices[0]?.message?.content?.trim()
-
-    // 3. Save both AI response and sentiment to Supabase
     const { error } = await supabase
       .from('reviews')
-      .update({ generated_response: aiResponse, sentiment: sentiment })
+      .update({ generated_response: response, sentiment })
       .eq('id', reviewId)
 
     if (error) {
-      console.error('Supabase update error:', error)
-      return res.status(500).json({ error: 'Failed to save response to database' })
+      console.error('Supabase update error:', error.message)
+      return res.status(500).json({ error: 'Failed to save AI response' })
     }
 
-    return res.status(200).json({ success: true })
-  } catch (error) {
-    console.error('API error:', error)
-    return res.status(500).json({ error: 'Server error' })
+    return res.status(200).json({ success: true, generated_response: response, sentiment })
+  } catch (error: any) {
+    console.error('OpenAI error:', error.message)
+    return res.status(500).json({ error: 'Something went wrong' })
   }
 }
