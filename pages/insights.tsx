@@ -33,6 +33,12 @@ export default function Insights() {
     fetchReviews()
   }, [])
 
+  const handleLogout = async () => {
+    const supabase = createPagesBrowserClient()
+    await supabase.auth.signOut()
+    router.push('/auth')
+  }
+
   const total = reviews.length
   const withResponse = reviews.filter((r) => r.generated_response).length
 
@@ -43,7 +49,7 @@ export default function Insights() {
   }))
 
   return (
-    <div className="bg-gray-50 min-h-screen py-10">
+    <div className="relative bg-gray-50 min-h-screen py-10 pb-24">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-6">
         <Image
           src="/LocalEcho Logo.png"
@@ -55,7 +61,7 @@ export default function Insights() {
         <h1 className="text-3xl font-bold">📊 Insights</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 px-4 max-w-4xl mx-auto">
         <div className="bg-white rounded-xl shadow p-6">
           <p className="text-sm text-gray-500">Total Reviews</p>
           <p className="text-3xl font-semibold">{total}</p>
@@ -69,18 +75,25 @@ export default function Insights() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow p-6">
+      <div className="bg-white rounded-xl shadow p-6 mx-4 max-w-4xl mx-auto">
         <h2 className="text-xl font-semibold mb-4 text-center">Sentiment Breakdown</h2>
-        <div className="w-full" style={{ height: 300 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData}>
-              <XAxis dataKey="sentiment" />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Bar dataKey="count" fill="#4F46E5" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={chartData}>
+            <XAxis dataKey="sentiment" />
+            <YAxis allowDecimals={false} />
+            <Tooltip />
+            <Bar dataKey="count" fill="#4F46E5" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="fixed bottom-4 left-4">
+        <button
+          onClick={handleLogout}
+          className="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300"
+        >
+          🚪 Log Out
+        </button>
       </div>
     </div>
   )

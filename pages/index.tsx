@@ -17,7 +17,6 @@ import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs'
 // Logo
 import Image from 'next/image'
 
-// Main Home component for the AI-powered review response assistant
 export default function Home() {
   const [reviews, setReviews] = useState<any[]>([])
   const [tone, setTone] = useState('Professional')
@@ -78,12 +77,7 @@ export default function Home() {
     const response = await fetch('/api/add-review', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        business_name: businessName,
-        customer_review: customerReview,
-        tone,
-        user_id: user.id
-      })
+      body: JSON.stringify({ business_name: businessName, customer_review: customerReview, tone, user_id: user.id })
     })
 
     if (response.ok) {
@@ -147,169 +141,110 @@ export default function Home() {
   )
 
   return (
-    <div style={{ padding: '2rem' }}>
-      {/* Logout Button */}
-      {user && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-          <button onClick={handleLogout} style={{ padding: '0.5rem 1rem', backgroundColor: '#eee' }}>
-            🚪 Log Out
-          </button>
-        </div>
-      )}
-
-      {/* Logo */}
-      <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-        <Image
-          src="/LocalEcho Logo.png"
-          alt="LocalEcho Logo"
-          width={100}
-          height={100}
-        />
+    <div className="relative px-6 py-8 max-w-5xl mx-auto min-h-screen pb-20">
+      <div className="text-center mb-6">
+        <Image src="/LocalEcho Logo.png" alt="LocalEcho Logo" width={100} height={100} className="mx-auto" />
       </div>
 
-      <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
+      <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }} className="text-2xl font-bold mb-2">
         👋 Welcome to LocalEcho
       </motion.h1>
-      <p>This is the MVP starting point for your AI-powered review response assistant.</p>
+      <p className="mb-4">This is the MVP starting point for your AI-powered review response assistant.</p>
 
-      <button onClick={() => setIsModalOpen(true)} style={{ marginBottom: '1rem' }}>⚙️ Settings</button>
+      <button onClick={() => setIsModalOpen(true)} className="mb-4 text-blue-600 underline">⚙️ Settings</button>
 
       <Modal
         isOpen={isModalOpen}
         onRequestClose={() => setIsModalOpen(false)}
         contentLabel="Settings Modal"
-        style={{ content: { top: '25%', left: '25%', right: '25%', bottom: '25%' } }}
+        className="bg-white p-6 max-w-lg mx-auto my-20 rounded shadow-lg"
+        overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
       >
-        <h2>Settings</h2>
-        <p>(Coming soon!) Choose default tone, enable AI by default, etc.</p>
-        <button onClick={() => setIsModalOpen(false)}>Close</button>
+        <h2 className="text-lg font-bold mb-2">Settings</h2>
+        <p className="mb-4">(Coming soon!) Choose default tone, enable AI by default, etc.</p>
+        <button onClick={() => setIsModalOpen(false)} className="text-blue-600 underline">Close</button>
       </Modal>
 
-      <section style={{ margin: '2rem 0' }}>
-        <h2>Add New Review</h2>
-        <input
-          type="text"
-          placeholder="Business Name"
-          value={businessName}
-          onChange={(e) => setBusinessName(e.target.value)}
-          style={{ marginRight: '1rem' }}
-        />
-        <input
-          type="text"
-          placeholder="Customer Review"
-          value={customerReview}
-          onChange={(e) => setCustomerReview(e.target.value)}
-          style={{ marginRight: '1rem' }}
-        />
-        <select
-          value={tone}
-          onChange={(e) => setTone(e.target.value)}
-          style={{ marginRight: '1rem' }}
-        >
-          <option value="Professional">Professional</option>
-          <option value="Friendly">Friendly</option>
-          <option value="Empathetic">Empathetic</option>
-          <option value="Witty">Witty</option>
-          <option value="Apologetic">Apologetic</option>
-        </select>
-        <button
-          onClick={handleSubmitReview}
-          style={{ backgroundColor: '#4CAF50', color: 'white', padding: '0.5rem 1rem' }}
-        >
-          Submit Review
-        </button>
+      <section className="my-8 bg-white rounded-xl shadow p-6">
+        <h2 className="text-xl font-semibold mb-4">➕ Add New Review</h2>
+        <div className="flex flex-wrap gap-4">
+          <input type="text" placeholder="Business Name" value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="border px-3 py-2 rounded w-full md:w-auto" />
+          <input type="text" placeholder="Customer Review" value={customerReview} onChange={(e) => setCustomerReview(e.target.value)} className="border px-3 py-2 rounded w-full md:w-auto" />
+          <select value={tone} onChange={(e) => setTone(e.target.value)} className="border px-3 py-2 rounded">
+            <option value="Professional">Professional</option>
+            <option value="Friendly">Friendly</option>
+            <option value="Empathetic">Empathetic</option>
+            <option value="Witty">Witty</option>
+            <option value="Apologetic">Apologetic</option>
+          </select>
+          <button onClick={handleSubmitReview} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Submit Review</button>
+        </div>
       </section>
 
-      <section>
-        <label htmlFor="search">🔍 Search Reviews:</label>
-        <input
-          id="search"
-          type="text"
-          placeholder="Search by business or review..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ marginLeft: '0.5rem', padding: '0.4rem' }}
-        />
+      <section className="mb-6">
+        <label htmlFor="search" className="font-medium">🔍 Search Reviews:</label>
+        <input id="search" type="text" placeholder="Search by business or review..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="ml-2 border px-3 py-2 rounded w-full md:w-auto" />
       </section>
 
       {isLoading && <p>⏳ Loading...</p>}
-      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
+      {errorMessage && <p className="text-red-600">{errorMessage}</p>}
 
-      <section style={{ marginTop: '2rem' }}>
-        <h2>📋 Reviews:</h2>
+      <section className="mt-8">
+        <h2 className="text-xl font-bold mb-4">📋 Reviews:</h2>
         {filteredReviews.length === 0 ? (
-          <div style={{ textAlign: 'center', color: '#666' }}>
-            <p style={{ fontSize: '4rem' }}>📭</p>
+          <div className="text-center text-gray-500">
+            <p className="text-6xl">📭</p>
             <strong>No reviews yet.</strong>
             <p>Add a review above and see AI magic happen ✨</p>
           </div>
         ) : (
-          <ul>
+          <ul className="space-y-6">
             {filteredReviews.map((review, index) => (
-              <li key={index} style={{ marginBottom: '1.5rem' }}>
-                <strong>{review.business_name}</strong> — <em>{review.customer_review}</em>
-                <br />
-                <small>
-                  {review.created_at
-                    ? new Date(review.created_at).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })
-                    : 'Date not available'}
-                </small>
-                <br />
-                {review.sentiment && (
-                  <small><strong>Sentiment:</strong> {review.sentiment}</small>
-                )}
-                <br />
+              <li key={index} className="bg-white border p-6 rounded-xl shadow-md">
+                <div className="mb-2">
+                  <strong>{review.business_name}</strong> — <em>{review.customer_review}</em>
+                </div>
+                <div className="text-sm text-gray-600 mb-2">
+                  {review.created_at ? new Date(review.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Date not available'}
+                  {review.sentiment && <span className="ml-4"><strong>Sentiment:</strong> {review.sentiment}</span>}
+                </div>
                 {editingId === review.id ? (
                   <>
-                    <textarea
-                      value={editedResponse}
-                      onChange={(e) => setEditedResponse(e.target.value)}
-                      style={{ width: '100%', minHeight: '80px' }}
-                    />
-                    <button onClick={() => handleSaveEditedResponse(review.id)}>💾 Save</button>
-                    <button onClick={() => setEditingId(null)}>❌ Cancel</button>
+                    <textarea value={editedResponse} onChange={(e) => setEditedResponse(e.target.value)} className="w-full min-h-[80px] border px-3 py-2 rounded mt-2" />
+                    <div className="mt-3 flex gap-3">
+                      <button onClick={() => handleSaveEditedResponse(review.id)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">💾 Save</button>
+                      <button onClick={() => setEditingId(null)} className="text-gray-600">❌ Cancel</button>
+                    </div>
                   </>
                 ) : (
                   review.generated_response && (
                     <>
-                      <p><strong>AI Response:</strong> {review.generated_response}</p>
-                      <button
-                        onClick={() => {
-                          setEditingId(review.id)
-                          setEditedResponse(review.generated_response || '')
-                        }}
-                        style={{ marginRight: '0.5rem' }}
-                      >
-                        ✏️ Edit
-                      </button>
+                      <p className="mt-2"><strong>AI Response:</strong> {review.generated_response}</p>
+                      <button onClick={() => { setEditingId(review.id); setEditedResponse(review.generated_response || '') }} className="mt-2 text-blue-600 underline">✏️ Edit</button>
                     </>
                   )
                 )}
-                <button
-                  onClick={() => handleGenerateResponse(review.id, review.business_name, review.customer_review)}
-                  style={{ marginRight: '0.5rem', padding: '0.3rem 0.7rem' }}
-                >
-                  Generate AI Response
-                </button>
-                <button
-                  onClick={() => handleDeleteReview(review.id)}
-                  style={{ backgroundColor: 'red', color: 'white', padding: '0.3rem 0.7rem' }}
-                >
-                  Delete
-                </button>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button onClick={() => handleGenerateResponse(review.id, review.business_name, review.customer_review)} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">⚡ Generate</button>
+                  <button onClick={() => handleDeleteReview(review.id)} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">🗑️ Delete</button>
+                </div>
               </li>
             ))}
           </ul>
         )}
       </section>
 
-      <section style={{ marginTop: '2rem' }}>
-        <Link href="/insights">📊 View Insights</Link>
+      <section className="mt-8 text-center">
+        <Link href="/insights" className="text-blue-600 underline">📊 View Insights</Link>
       </section>
+
+      {user && (
+        <div className="fixed bottom-4 left-4">
+          <button onClick={handleLogout} className="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300">
+            🚪 Log Out
+          </button>
+        </div>
+      )}
     </div>
   )
 }
