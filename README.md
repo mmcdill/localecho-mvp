@@ -34,7 +34,7 @@ LocalEcho helps local business owners efficiently respond to customer reviews us
 - **Frontend**: Next.js (React)
 - **Database**: Supabase
 - **AI**: OpenAI GPT-4 API
-- **Deployment**: (Planned) Vercel
+- **Deployment**: Local development only (for now)
 
 ---
 
@@ -88,8 +88,8 @@ LocalEcho helps local business owners efficiently respond to customer reviews us
 ## 👤 Author
 
 **Matt McDill**  
-Passionate about contributing towards small businesses & community connection.  
-Connect via GitHub: [@mmcdill](https://github.com/mmcdill)
+Tech enthusiast and builder focused on tools that support small business and community growth.  
+GitHub: [@mmcdill](https://github.com/mmcdill)
 
 ---
 
