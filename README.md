@@ -1,4 +1,9 @@
 # LocalEcho MVP
+
+⚠️ **Project Status: On Hold**  
+This project is paused for now while I explore other side hustle ideas. All code and data are safely stored and ready to resume at any time.
+
+
 A starter Next.js project for AI-powered review response assistance.
 
 # 📣 LocalEcho
@@ -19,7 +24,9 @@ LocalEcho helps local business owners efficiently respond to customer reviews us
 - ✅ **Review deletion confirmation**
 - ⚙️ **Toggle auto-response on/off**
 - ⏰ **Better timestamp formatting**
-
+- 🔒 **User authentication (email/password login)**
+- 🚪 **Logout functionality**
+- 🖼️ **Branding logo on all pages**
 ---
 
 ## 📦 Tech Stack
